@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Customer Help - Walsmart Help Radar</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="page">
+  <div class="container">
+    <h1>Need Help?</h1>
+
+    <section id="request-form-section">
+      <h2>Describe Your Location and Help Needed</h2>
+      <label>
+        Where are you? (Aisle / Area)
+        <input type="text" id="location-description" placeholder="e.g. Aisle 12, cereal section">
+      </label>
+      <label>
+        What do you need?
+        <select id="help-type">
+          <option value="">Select type...</option>
+          <option value="Find an item">Find an item</option>
+          <option value="Price question">Price question</option>
+          <option value="Accessibility assistance">Accessibility assistance</option>
+          <option value="Other">Other</option>
+        </select>
+      </label>
+      <label>
+        Extra details (optional)
+        <textarea id="help-notes" rows="3" placeholder="e.g. I am using a wheelchair, please come slowly."></textarea>
+      </label>
+      <label>
+        Approximate area (zone)
+        <select id="customer-zone"></select>
+      </label>
+      <button class="btn primary" id="submit-request-btn">Request Help</button>
+      <p id="request-status" class="status-text"></p>
+    </section>
+
+    <section id="status-section" class="hidden">
+      <h2>Status & Radar</h2>
+      <p id="live-status" class="status-text"></p>
+      <div class="layout">
+        <div class="info-panel">
+          <h3>Details</h3>
+          <p id="request-details"></p>
+        </div>
+        <div class="radar-panel">
+          <h3>Helpers Nearby</h3>
+          <div id="radar-container">
+            <canvas id="radar-canvas" width="300" height="300"></canvas>
+          </div>
+          <p class="hint-text">You are in the center. Active helpers appear as dots around you.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="js/shared.js"></script>
+  <script src="js/customer.js"></script>
+</body>
+</html>
