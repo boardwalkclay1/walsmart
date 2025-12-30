@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HTML Reader - Walsmart Help Radar</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="page">
+  <div class="container">
+    <h1>HTML Reader</h1>
+    <p>Select a local HTML file to preview inside the app.</p>
+    <label>
+      HTML file
+      <select id="html-file-select"></select>
+    </label>
+    <button class="btn primary" id="load-file-btn">Load</button>
+
+    <div id="reader-frame-container">
+      <iframe id="reader-frame" title="HTML Preview"></iframe>
+    </div>
+  </div>
+
+  <script>
+    async function fetchHtmlFiles() {
+      try {
+        const res = await fetch('/api/html-files');
+        const files = await res.json();
+        const select = document.getElementById('html-file-select');
+        select.innerHTML = '';
+        files.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f;
+          opt.textContent = f;
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Failed to fetch HTML files', err);
+      }
+    }
+
+    document.getElementById('load-file-btn').addEventListener('click', () => {
+      const select = document.getElementById('html-file-select');
+      const file = select.value;
+      if (!file) return;
+      const frame = document.getElementById('reader-frame');
+      frame.src = '/' + file;
+    });
+
+    fetchHtmlFiles();
+  </script>
+</body>
+</html>
