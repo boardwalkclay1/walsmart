@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Employee Console - Walsmart Help Radar</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="page">
+  <div class="container">
+    <h1>Employee Console</h1>
+
+    <section id="login-section">
+      <h2>Login / Profile</h2>
+      <label>
+        Employee Code (PIN or ID)
+        <input type="text" id="employee-code" placeholder="e.g. 1234">
+      </label>
+      <label>
+        Name
+        <input type="text" id="employee-name" placeholder="Your name">
+      </label>
+      <label>
+        Role
+        <input type="text" id="employee-role" placeholder="e.g. Electronics">
+      </label>
+      <button class="btn primary" id="login-btn">Login / Update Profile</button>
+      <p id="login-status" class="status-text"></p>
+    </section>
+
+    <section id="status-section" class="hidden">
+      <h2>Status</h2>
+      <p id="current-employee"></p>
+      <label>
+        Zone
+        <select id="employee-zone"></select>
+      </label>
+      <div class="button-row">
+        <button class="btn primary" id="go-active-btn">Go Active</button>
+        <button class="btn warning" id="go-offline-btn">Go Offline</button>
+      </div>
+      <p id="status-message" class="status-text"></p>
+    </section>
+
+    <section id="requests-section" class="hidden">
+      <h2>Customer Requests</h2>
+      <div class="layout">
+        <div class="list-panel">
+          <h3>Open Requests</h3>
+          <ul id="request-list" class="list"></ul>
+        </div>
+        <div class="radar-panel">
+          <h3>Radar</h3>
+          <div id="radar-container">
+            <canvas id="radar-canvas" width="300" height="300"></canvas>
+          </div>
+          <p class="hint-text">Dots show requests and active employees by store zone.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="js/shared.js"></script>
+  <script src="js/employee.js"></script>
+</body>
+</html>
