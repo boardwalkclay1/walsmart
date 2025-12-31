@@ -1,62 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Customer Help - Walsmart Help Radar</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8" />
+  <title>Walsmart Customer Help</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0b1020" />
+
+  <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="page">
-  <div class="container">
-    <h1>Need Help?</h1>
+<body class="ws-body ws-body-customer">
+  <header class="ws-header">
+    <h1 class="ws-title">Need Help in the Store?</h1>
+    <p class="ws-subtitle">
+      Tap once to alert an employee. We’ll include your current aisle so they can find you faster.
+    </p>
+  </header>
 
-    <section id="request-form-section">
-      <h2>Describe Your Location and Help Needed</h2>
-      <label>
-        Where are you? (Aisle / Area)
-        <input type="text" id="location-description" placeholder="e.g. Aisle 12, cereal section">
-      </label>
-      <label>
-        What do you need?
-        <select id="help-type">
-          <option value="">Select type...</option>
-          <option value="Find an item">Find an item</option>
-          <option value="Price question">Price question</option>
-          <option value="Accessibility assistance">Accessibility assistance</option>
-          <option value="Other">Other</option>
-        </select>
-      </label>
-      <label>
-        Extra details (optional)
-        <textarea id="help-notes" rows="3" placeholder="e.g. I am using a wheelchair, please come slowly."></textarea>
-      </label>
-      <label>
-        Approximate area (zone)
-        <select id="customer-zone"></select>
-      </label>
-      <button class="btn primary" id="submit-request-btn">Request Help</button>
-      <p id="request-status" class="status-text"></p>
-    </section>
-
-    <section id="status-section" class="hidden">
-      <h2>Status & Radar</h2>
-      <p id="live-status" class="status-text"></p>
-      <div class="layout">
-        <div class="info-panel">
-          <h3>Details</h3>
-          <p id="request-details"></p>
-        </div>
-        <div class="radar-panel">
-          <h3>Helpers Nearby</h3>
-          <div id="radar-container">
-            <canvas id="radar-canvas" width="300" height="300"></canvas>
-          </div>
-          <p class="hint-text">You are in the center. Active helpers appear as dots around you.</p>
-        </div>
+  <main class="ws-main ws-layout-columns">
+    <section class="ws-card">
+      <h2 class="ws-section-title">Your Location</h2>
+      <p class="ws-text" id="locationStatus">
+        Detecting your in‑store location using Walsmart beacons…
+      </p>
+      <div class="ws-map-frame ws-map-customer">
+        <div class="ws-map-aisle ws-aisle-a">Aisles A1–A8</div>
+        <div class="ws-map-aisle ws-aisle-b">Aisles B1–B8</div>
+        <div class="ws-map-aisle ws-aisle-c">Aisles C1–C8</div>
+        <div id="customerDot" class="ws-map-dot ws-map-dot-customer"></div>
       </div>
+      <p class="ws-small ws-text">
+        For now, location is simulated. In production, this will be driven by Bluetooth beacons in the store.
+      </p>
     </section>
-  </div>
 
-  <script src="js/shared.js"></script>
-  <script src="js/customer.js"></script>
+    <section class="ws-card">
+      <h2 class="ws-section-title">Request Help</h2>
+      <div class="ws-help-categories">
+        <button class="ws-chip" data-category="general">General help</button>
+        <button class="ws-chip" data-category="electronics">Electronics</button>
+        <button class="ws-chip" data-category="grocery">Grocery</button>
+        <button class="ws-chip" data-category="clothing">Clothing</button>
+        <button class="ws-chip" data-category="pharmacy">Pharmacy</button>
+      </div>
+
+      <label class="ws-label" for="helpNote">Add a note (optional)</label>
+      <textarea id="helpNote" class="ws-input" rows="3"
+        placeholder="Example: I need help finding air fryers."></textarea>
+
+      <button id="helpButton" class="ws-btn ws-btn-primary ws-btn-large">
+        I Need Help
+      </button>
+
+      <p id="helpStatus" class="ws-status ws-status-idle">
+        Not connected to Walsmart yet.
+      </p>
+    </section>
+  </main>
+
+  <footer class="ws-footer">
+    <a href="index.html" class="ws-link">Back to role selection</a>
+  </footer>
+
+  <script>
+    // Basic WebSocket + simulated beacon logic for now
+    const helpStatus = document.getElementById('helpStatus');
+    const helpButton = document.getElementById('helpButton');
+    const helpNote = document.getElementById('helpNote');
+    const locationStatus = document.getElementById('locationStatus');
+    const customerDot = document.getElementById('customerDot');
+    const chips = document.querySelectorAll('.ws-chip');
+
+    let selectedCategory = 'general';
+    let ws = null;
+    let currentLocation = {
+      beaconId: 'A12-North',
+      aisle: 12,
+      section: 'North',
+      x: 60,
+      y: 40
+    };
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('ws-chip-selected'));
+        chip.classList.add('ws-chip-selected');
+        selectedCategory = chip.getAttribute('data-category');
+      });
+    });
+
+    function updateMapDot() {
+      customerDot.style.left = currentLocation.x + '%';
+      customerDot.style.top = currentLocation.y + '%';
+      locationStatus.textContent =
+        `Approximate location: Aisle ${currentLocation.ailse || currentLocation.aisle}, ` +
+        `${currentLocation.section} section (simulated).`;
+    }
+
+    function connectWebSocket() {
+      const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+      const wsUrl = `${protocol}://${location.host}`;
+      ws = new WebSocket(wsUrl);
+
+      ws.addEventListener('open', () => {
+        helpStatus.textContent = 'Connected to Walsmart. Ready to request help.';
+        helpStatus.className = 'ws-status ws-status-connected';
+        ws.send(JSON.stringify({ type: 'register', role: 'customer' }));
+      });
+
+      ws.addEventListener('message', (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'help-accepted') {
+            helpStatus.textContent = 'An employee is on the way to you now.';
+            helpStatus.className = 'ws-status ws-status-accepted';
+          }
+        } catch (e) {
+          console.error('Invalid message from server:', e);
+        }
+      });
+
+      ws.addEventListener('close', () => {
+        helpStatus.textContent = 'Disconnected from Walsmart. Trying to reconnect…';
+        helpStatus.className = 'ws-status ws-status-idle';
+        setTimeout(connectWebSocket, 2000);
+      });
+
+      ws.addEventListener('error', () => {
+        helpStatus.textContent = 'Connection error. Retrying…';
+        helpStatus.className = 'ws-status ws-status-error';
+      });
+    }
+
+    helpButton.addEventListener('click', () => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        helpStatus.textContent = 'Still connecting. Please wait a moment and try again.';
+        helpStatus.className = 'ws-status ws-status-error';
+        return;
+      }
+
+      const payload = {
+        category: selectedCategory,
+        note: helpNote.value.trim(),
+        location: currentLocation,
+        createdAt: new Date().toISOString()
+      };
+
+      ws.send(JSON.stringify({
+        type: 'help-request',
+        payload
+      }));
+
+      helpStatus.textContent = 'Help request sent. Waiting for an employee to accept.';
+      helpStatus.className = 'ws-status ws-status-pending';
+    });
+
+    // Initial setup
+    updateMapDot();
+    connectWebSocket();
+  </script>
 </body>
 </html>
