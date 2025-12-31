@@ -1,52 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>HTML Reader - Walsmart Help Radar</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8" />
+  <title>Walsmart HTML Reader & Debug</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="page">
-  <div class="container">
-    <h1>HTML Reader</h1>
-    <p>Select a local HTML file to preview inside the app.</p>
-    <label>
-      HTML file
-      <select id="html-file-select"></select>
-    </label>
-    <button class="btn primary" id="load-file-btn">Load</button>
+<body class="ws-body ws-body-reader">
+  <header class="ws-header">
+    <h1 class="ws-title">Walsmart HTML Reader &amp; Debug</h1>
+    <p class="ws-subtitle">
+      Internal tools for testing WebSocket connectivity and message flow.
+    </p>
+  </header>
 
-    <div id="reader-frame-container">
-      <iframe id="reader-frame" title="HTML Preview"></iframe>
-    </div>
-  </div>
+  <main class="ws-main ws-layout-grid">
+    <section class="ws-card">
+      <h2 class="ws-section-title">Raw WebSocket Console</h2>
+      <div class="ws-console-controls">
+        <button id="connectAsCustomer" class="ws-btn ws-btn-secondary">Connect as Customer</button>
+        <button id="connectAsEmployee" class="ws-btn ws-btn-secondary">Connect as Employee</button>
+        <button id="sendTestHelp" class="ws-btn ws-btn-primary">Send Test Help Request</button>
+      </div>
+      <pre id="wsLog" class="ws-console"></pre>
+    </section>
+
+    <section class="ws-card">
+      <h2 class="ws-section-title">Notes</h2>
+      <ul class="ws-text ws-small">
+        <li><strong>Connect as Customer</strong> registers this page as a customer client.</li>
+        <li><strong>Connect as Employee</strong> registers this page as an employee client.</li>
+        <li><strong>Send Test Help Request</strong> simulates a help request from this page.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="ws-footer">
+    <a href="index.html" class="ws-link">Back to main app</a>
+  </footer>
 
   <script>
-    async function fetchHtmlFiles() {
-      try {
-        const res = await fetch('/api/html-files');
-        const files = await res.json();
-        const select = document.getElementById('html-file-select');
-        select.innerHTML = '';
-        files.forEach(f => {
-          const opt = document.createElement('option');
-          opt.value = f;
-          opt.textContent = f;
-          select.appendChild(opt);
-        });
-      } catch (err) {
-        console.error('Failed to fetch HTML files', err);
-      }
+    const wsLog = document.getElementById('wsLog');
+    const connectAsCustomer = document.getElementById('connectAsCustomer');
+    const connectAsEmployee = document.getElementById('connectAsEmployee');
+    const sendTestHelp = document.getElementById('sendTestHelp');
+
+    let ws = null;
+    let currentRole = null;
+
+    function log(message) {
+      const time = new Date().toISOString().split('T')[1].split('.')[0];
+      wsLog.textContent += `[${time}] ${message}\n`;
+      wsLog.scrollTop = wsLog.scrollHeight;
     }
 
-    document.getElementById('load-file-btn').addEventListener('click', () => {
-      const select = document.getElementById('html-file-select');
-      const file = select.value;
-      if (!file) return;
-      const frame = document.getElementById('reader-frame');
-      frame.src = '/' + file;
-    });
+    function connect(role) {
+      currentRole = role;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
 
-    fetchHtmlFiles();
+      const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+      const wsUrl = `${protocol}://${location.host}`;
+      ws = new WebSocket(wsUrl);
+
+      ws.addEventListener('open', () => {
+        log(`Connected as ${role}.`);
+        ws.send(JSON.stringify({ type: 'register', role }));
+      });
+
+      ws.addEventListener('message', (event) => {
+        log(`<< ${event.data}`);
+      });
+
+      ws.addEventListener('close', () => {
+        log('Connection closed.');
+      });
+
+      ws.addEventListener('error', (err) => {
+        log('Error: ' + err.message);
+      });
+    }
+
+    connectAsCustomer.addEventListener('click', () => connect('customer'));
+    connectAsEmployee.addEventListener('click', () => connect('employee'));
+
+    sendTestHelp.addEventListener('click', () => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        log('Cannot send test help: WebSocket not open.');
+        return;
+      }
+      const payload = {
+        category: 'test',
+        note: 'This is a test help request from reader.html',
+        location: { aisle: 99, section: 'Debug', x: 50, y: 50 },
+        createdAt: new Date().toISOString()
+      };
+      const msg = JSON.stringify({ type: 'help-request', payload });
+      log('>> ' + msg);
+      ws.send(msg);
+    });
   </script>
 </body>
 </html>
