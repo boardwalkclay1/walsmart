@@ -1,21 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Walsmart Help Radar</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0b1020" />
+
+  <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="page">
-  <div class="container">
-    <h1>Walsmart Help Radar</h1>
-    <p>Select your role:</p>
-    <div class="button-row">
-      <a class="btn primary" href="employee.html">I am an Employee</a>
-      <a class="btn secondary" href="customer.html">I am a Customer</a>
-    </div>
-    <div class="footer-links">
-      <a href="reader.html">HTML Reader</a>
-    </div>
-  </div>
+<body class="ws-body">
+  <header class="ws-header">
+    <h1 class="ws-title">Walsmart Help Radar</h1>
+    <p class="ws-subtitle">Instant in‑store assistance, right from your phone.</p>
+  </header>
+
+  <main class="ws-main ws-layout-grid">
+    <section class="ws-card">
+      <h2 class="ws-section-title">Who are you?</h2>
+      <p class="ws-text">
+        Choose your role to continue. Customers can request help. Employees can respond in real time.
+      </p>
+      <div class="ws-role-buttons">
+        <a href="customer.html" class="ws-btn ws-btn-primary">I am a Customer</a>
+        <a href="employee.html" class="ws-btn ws-btn-secondary">I am an Employee</a>
+      </div>
+    </section>
+
+    <section class="ws-card">
+      <h2 class="ws-section-title">Install Walsmart Help</h2>
+      <p class="ws-text">
+        Scan the QR code at the store entrance or tap “Install app” below to add Walsmart Help to your home screen.
+      </p>
+      <button id="installButton" class="ws-btn ws-btn-accent" disabled>
+        Install Walsmart Help
+      </button>
+      <p class="ws-helper-text" id="installHint">
+        The install button will activate when your browser is ready to install the app.
+      </p>
+    </section>
+
+    <section class="ws-card ws-map-preview">
+      <h2 class="ws-section-title">In‑Store Map Preview</h2>
+      <div class="ws-map-frame">
+        <div class="ws-map-aisle ws-aisle-a">Aisles A1–A8</div>
+        <div class="ws-map-aisle ws-aisle-b">Aisles B1–B8</div>
+        <div class="ws-map-aisle ws-aisle-c">Aisles C1–C8</div>
+        <div class="ws-map-you-are-here">You are here</div>
+      </div>
+      <p class="ws-text ws-small">
+        Customers using Walsmart Help see their approximate aisle based on in‑store beacons.
+      </p>
+    </section>
+  </main>
+
+  <footer class="ws-footer">
+    <a href="reader.html" class="ws-link">HTML Reader &amp; Debug Tools</a>
+  </footer>
+
+  <script>
+    // PWA install handling
+    let deferredPrompt = null;
+    const installButton = document.getElementById('installButton');
+    const installHint = document.getElementById('installHint');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installButton.disabled = false;
+      installHint.textContent = 'Tap “Install Walsmart Help” to add the app to your home screen.';
+    });
+
+    installButton.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      installButton.disabled = true;
+      installHint.textContent = outcome === 'accepted'
+        ? 'App installed. You can now open it from your home screen.'
+        : 'Install dismissed. You can always install later.';
+    });
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch(console.error);
+      });
+    }
+  </script>
 </body>
 </html>
